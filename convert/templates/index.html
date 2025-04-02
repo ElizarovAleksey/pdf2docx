@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>PDF Конвертер</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <!-- Bootstrap -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Наш CSS -->
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body class="d-flex align-items-center justify-content-center vh-100">
+<div class="card shadow-lg p-4 rounded-4" style="min-width: 400px;">
+    <div class="d-flex justify-content-between align-items-center mb-3">
+        <h3 class="mb-0">PDF → Word / Excel</h3>
+        <button id="toggle-theme" class="btn btn-outline-secondary btn-sm">🌙</button>
+    </div>
+
+    <form id="convert-form">
+        <div class="mb-3">
+            <label class="form-label">Загрузка PDF:</label>
+            <div id="drop-zone" class="drop-zone border border-2 border-dashed rounded p-3 text-center bg-light">
+                <p id="drop-text" class="m-0 text-muted">Перетащите сюда PDF-файлы или кликните</p>
+                <input id="file-input" class="form-control d-none" type="file" name="file" accept="application/pdf" multiple required>
+            </div>
+            <ul id="file-list" class="list-group mt-2 small" style="max-height: 150px; overflow-y: auto;"></ul>
+            <div class="form-text">Можно выбрать один или несколько PDF-файлов.</div>
+        </div>
+
+        <div class="mb-3">
+            <label class="form-label">Формат вывода:</label>
+            <select class="form-select" name="format" required>
+                <option value="docx">Word (.docx)</option>
+                <option value="xlsx">Excel (.xlsx)</option>
+            </select>
+            <div class="form-text">Word — для текстов, Excel — для таблиц.</div>
+        </div>
+
+        <div id="status" class="mb-3 text-center text-info" style="display:none;">⏳ Конвертация...</div>
+        <div id="error" class="mb-3 text-center text-danger" style="display:none;"></div>
+        <div id="success" class="mb-3 text-center text-success" style="display:none;"></div>
+
+        <div class="d-grid">
+            <button type="submit" class="btn btn-primary">Конвертировать</button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Переключение темы
+    const toggleBtn = document.getElementById('toggle-theme');
+    const body = document.body;
+    const card = document.querySelector('.card');
+    const theme = localStorage.getItem('theme');
+
+    if (theme === 'dark') {
+        body.classList.add('dark');
+        card.classList.add('dark');
+        toggleBtn.textContent = '☀️';
+    }
+
+    toggleBtn.addEventListener('click', () => {
+        body.classList.toggle('dark');
+        card.classList.toggle('dark');
+        const isDark = body.classList.contains('dark');
+        localStorage.setItem('theme', isDark ? 'dark' : 'light');
+        toggleBtn.textContent = isDark ? '☀️' : '🌙';
+    });
+
+    // Drag and drop
+    const dropZone = document.getElementById('drop-zone');
+    const fileInput = document.getElementById('file-input');
+    const dropText = document.getElementById('drop-text');
+    const fileList = document.getElementById('file-list');
+
+    dropZone.addEventListener('click', () => fileInput.click());
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.add('bg-info-subtle');
+            dropText.textContent = 'Отпустите файлы здесь...';
+        });
+    });
+
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropZone.addEventListener(eventName, (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('bg-info-subtle');
+            dropText.textContent = 'Перетащите сюда PDF-файлы или кликните';
+        });
+    });
+
+    dropZone.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (e.dataTransfer.files.length > 0) {
+            fileInput.files = e.dataTransfer.files;
+            updateFileList(fileInput.files);
+        }
+    });
+
+    fileInput.addEventListener('change', () => {
+        updateFileList(fileInput.files);
+    });
+
+    function updateFileList(files) {
+        fileList.innerHTML = '';
+        if (files.length === 0) {
+            const item = document.createElement('li');
+            item.className = 'list-group-item text-muted';
+            item.textContent = 'Файлы не выбраны';
+            fileList.appendChild(item);
+            return;
+        }
+        for (let i = 0; i < files.length; i++) {
+            const item = document.createElement('li');
+            item.className = 'list-group-item d-flex justify-content-between align-items-center';
+            const name = document.createElement('span');
+            name.textContent = files[i].name;
+            const size = document.createElement('small');
+            size.textContent = (files[i].size / 1024).toFixed(1) + ' KB';
+            item.appendChild(name);
+            item.appendChild(size);
+            fileList.appendChild(item);
+        }
+    }
+
+    // AJAX отправка
+    const form = document.getElementById('convert-form');
+    const status = document.getElementById('status');
+    const errorBox = document.getElementById('error');
+    const successBox = document.getElementById('success');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        status.style.display = 'block';
+        errorBox.style.display = 'none';
+        successBox.style.display = 'none';
+        status.textContent = '⏳ Конвертация...';
+
+        const formData = new FormData();
+        const files = fileInput.files;
+        const format = document.querySelector('select[name="format"]').value;
+
+        for (let i = 0; i < files.length; i++) {
+            formData.append('file', files[i]);
+        }
+        formData.append('format', format);
+
+        try {
+            const response = await fetch('/convert', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (!response.ok) {
+                const data = await response.json();
+                throw new Error(data.error || 'Ошибка конвертации');
+            }
+
+            const blob = await response.blob();
+            const contentDisposition = response.headers.get('Content-Disposition');
+            let filename = 'result.zip';
+
+            if (contentDisposition) {
+                const match = contentDisposition.match(/filename="(.+?)"/);
+                if (match) {
+                    filename = match[1];
+                }
+            }
+
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = filename;
+            link.click();
+
+            status.style.display = 'none';
+            successBox.textContent = '✅ Файлы успешно сконвертированы!';
+            successBox.style.display = 'block';
+        } catch (err) {
+            status.style.display = 'none';
+            errorBox.textContent = `❌ ${err.message}`;
+            errorBox.style.display = 'block';
+        }
+    });
+</script>
+
+</body>
+</html>

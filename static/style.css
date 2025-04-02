@@ -1,0 +1,103 @@
+body {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+.card {
+    transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Светлая тема: select нормального цвета */
+body:not(.dark) .form-select {
+    background-color: #fff;
+    color: #212529;
+    border: 1px solid #ced4da;
+}
+
+/* Тёмная тема: select тёмный */
+body.dark .form-select {
+    background-color: #21262d;
+    color: #e0e0e0;
+    border: 1px solid #30363d;
+}
+
+.card.dark {
+    background-color: #161b22;
+    color: #ffffff;
+    box-shadow: 0 4px 30px rgba(0, 0, 0, 0.4);
+    border-radius: 16px;
+}
+
+.form-control,
+.form-select {
+    background-color: #21262d;
+    color: #e0e0e0;
+    border: 1px solid #30363d;
+    border-radius: 10px;
+    padding-right: 2.5rem;
+    transition: all 0.2s ease;
+    position: relative;
+    z-index: 1;
+}
+
+.form-control:focus,
+.form-select:focus {
+    background-color: #21262d;
+    color: #fff;
+    border-color: #58a6ff;
+    box-shadow: 0 0 0 0.2rem rgba(88, 166, 255, 0.3);
+    z-index: 3;
+}
+
+.list-group-item {
+    background-color: transparent;
+    border-color: #2c313a;
+    color: #ccc;
+}
+
+.drop-zone.bg-info-subtle {
+    background-color: #1f2a38 !important;
+}
+
+.btn-primary {
+    background-color: #2384f5;
+    border-color: #2384f5;
+    font-weight: 500;
+    z-index: 0;
+    position: relative;
+}
+
+.btn-primary:hover {
+    background-color: #1c6ed8;
+    border-color: #1c6ed8;
+}
+
+.btn-outline-secondary {
+    border-color: #666;
+    color: #ccc;
+    background-color: transparent;
+}
+
+.btn-outline-secondary:hover {
+    background-color: #ccc;
+    color: #000;
+}
+
+/* Тёмный фон страницы */
+body.dark {
+    background-color: #0d1117;
+    color: #e0e0e0;
+}
+
+/* Подсказки под формами */
+body.dark .form-text {
+    color: #a0a0a0;
+}
+
+/* Тёмный цвет текста placeholder (drag-n-drop) */
+body.dark ::placeholder {
+    color: #888 !important;
+}
+
+/* Выравнивание цвета рамки drop-зоны */
+body.dark .drop-zone {
+    border-color: #30363d !important;
+}
