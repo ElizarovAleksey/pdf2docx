@@ -1,5 +1,10 @@
-flask
-pdf2docx
-camelot-py
+Flask
 gunicorn
-
+pdf2docx
+PyPDF2
+python-docx
+pytesseract
+pdf2image
+Pillow
+camelot-py
+openpyxl

@@ -1,12 +1,13 @@
 FROM python:3.10-slim
 
-# Устанавливаем системные зависимости
+# Установка зависимостей системы
 RUN apt-get update && apt-get install -y \
-    libglib2.0-0 \
-    libsm6 \
-    libxext6 \
-    libxrender-dev \
-    && apt-get clean && rm -rf /var/lib/apt/lists/*
+    tesseract-ocr \
+    poppler-utils \
+    libgl1 \
+    gcc \
+    build-essential \
+    && rm -rf /var/lib/apt/lists/*
 
 # Создаём директорию приложения
 WORKDIR /app
@@ -20,7 +21,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Копируем всё приложение
 COPY . .
 
-# Создаём папку для логов (если нет)
+# Создаём папку для логов
 RUN mkdir -p logs
 
 # Указываем порт
